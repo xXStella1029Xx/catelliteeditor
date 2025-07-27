@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="ThemeResource" load_steps=2 format=3 uid="uid://dmhcwynxfhf41"]
+
+[ext_resource type="Script" uid="uid://1vg4jncljynj" path="res://resources/ThemeResource.gd" id="1_ak1xq"]
+
+[resource]
+script = ExtResource("1_ak1xq")
+background_color = "#FFFFFF"
+foreground_color = "#000000"
+symbol_color = "#008888"
+number_color = "#0000FF"
+function_color = "#FF0000"
+member_variable_color = "#000000"
+syntax_colors = {
+"boolean": "#FF8800",
+"comment": "#888888",
+"constant": "#FF4444",
+"keyword": "#FF00FF",
+"string": "#008800"
+}
+metadata/_custom_type_script = "uid://1vg4jncljynj"

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SyntaxResource" load_steps=2 format=3 uid="uid://c7bsk1w72f7rd"]
+
+[ext_resource type="Script" uid="uid://qqk367g6gddh" path="res://resources/SyntaxResource.gd" id="1_rtfq0"]
+
+[resource]
+script = ExtResource("1_rtfq0")
+indent_size = 4
+regions = {
+"key": [["begin", "end"]]
+}
+keywords = {
+"key": ["keyword"]
+}
+member_keywords = {
+"key": ["member_keyword"]
+}
+completions = [["display_text", "insert_text"]]
+metadata/_custom_type_script = "uid://qqk367g6gddh"

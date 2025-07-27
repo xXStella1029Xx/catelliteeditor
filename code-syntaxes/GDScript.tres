@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="SyntaxResource" load_steps=2 format=3 uid="uid://duedyg7758rr0"]
+
+[ext_resource type="Script" uid="uid://qqk367g6gddh" path="res://resources/SyntaxResource.gd" id="1_3h4hm"]
+
+[resource]
+script = ExtResource("1_3h4hm")
+indent_size = 4
+regions = {
+"comment": [["#", ""]],
+"string": [["\"", "\""]]
+}
+keywords = {
+"keyword": ["func", "var", "const", "class_name", "extends", "if", "elif", "else", "for", "while", "break", "continue", "return", "pass", "match", "in", "not", "and", "or", "true", "false", "null"]
+}
+member_keywords = {
+"member_keyword": ["Node", "Control"]
+}
+completions = [["_ready()", "func _ready():
+    pass"], ["_process(delta)", "func _process(delta):
+    pass"], ["func", "func"], ["var", "var"], ["const", "const"], ["class_name", "class_name"], ["extends", "extends"], ["if", "if"], ["elif", "elif"], ["else", "else"], ["for", "for"], ["while", "while"], ["break", "break"], ["continue", "continue"], ["return", "return"], ["pass", "pass"], ["match", "match"], ["in", "in"], ["not", "not"], ["and", "and"], ["or", "or"], ["true", "true"], ["false", "false"], ["null", "null"]]
+metadata/_custom_type_script = "uid://qqk367g6gddh"

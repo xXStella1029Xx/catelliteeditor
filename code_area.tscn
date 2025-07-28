@@ -1,0 +1,26 @@
+[gd_scene load_steps=2 format=3 uid="uid://ds3ttp7xayodf"]
+
+[ext_resource type="Script" uid="uid://bpn7epecqnu0y" path="res://code_area.gd" id="1_yhlge"]
+
+[node name="CodeArea" type="CodeEdit"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 61.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/line_number_color = Color(1, 1, 1, 1)
+emoji_menu_enabled = false
+caret_blink = true
+highlight_current_line = true
+draw_tabs = true
+draw_spaces = true
+gutters_draw_line_numbers = true
+indent_automatic = true
+auto_brace_completion_enabled = true
+auto_brace_completion_highlight_matching = true
+script = ExtResource("1_yhlge")
+
+[connection signal="code_completion_requested" from="." to="." method="_on_code_completion_requested"]
+[connection signal="text_changed" from="." to="." method="_on_text_changed"]

@@ -4,33 +4,40 @@ enum FileMenuId { NEW, OPEN, SAVE, SAVE_AS, QUIT }
 enum ViewMenuId { THEME }
 
 const NEW_FILE_PLACEHOLDER = "Untitled"
-const EXTENSIONS = {
-	"GDScript": ["gd"]
-}
+var extensions = {}
 const LANG_PLACEFOLDER = "Plain Text"
 const THEMES = ["Gessetti", "Pennarelli"]
 
 var current_file : String
-var current_lang : String
+var current_lang : String = "Plain Text"
 var current_syntax : String
-var current_theme : String
+var current_theme : String = "Gessetti"
 var file_dirty = false
 
 func _ready():
+	if !DirAccess.dir_exists_absolute("user://extensions.gd"):
+		var f = FileAccess.open("user://extensions.gd", FileAccess.WRITE)
+		f.store_string("extends Node
+
+const extensions = {
+	\"GDScript\": [\"gd\"]
+}")
+	extensions = load("user://extensions.gd").extensions
 	$TopBar/FileMenu.get_popup().id_pressed.connect(_on_file_menu_selected)
-	$TopBar/TestMenu.get_popup().id_pressed.connect(_on_test_menu_selected)
+	$TopBar/EditMenu.get_popup().id_pressed.connect(_on_edit_menu_selected)
+	$TopBar/ResourceMenu.get_popup().id_pressed.connect(_on_resource_menu_selected)
 	$BottomBar/IndentSizeMenu.get_popup().id_pressed.connect(_on_indent_changed_from_menu)
 	$BottomBar/SyntaxMenu.get_popup().id_pressed.connect(_on_syntax_changed_from_menu)
+	new_file("")
 	generate_theme_menu_items()
 	generate_syntax_menu_items()
-	$CodeArea.grab_focus()
-	new_file()
+	#$CodeArea.grab_focus()
+	
 
 #エディターからシンタックスのリソースを作成
-func _on_test_menu_selected(id: int):
+func _on_resource_menu_selected(id: int):
 	if id == 0:
-		new_file()
-		$CodeArea.text = "[gd_resource type=\"Resource\" script_class=\"SyntaxResource\" load_steps=2 format=3 uid=\"uid://" + Resource.generate_scene_unique_id() + "\"]
+		var text = "[gd_resource type=\"Resource\" script_class=\"SyntaxResource\" load_steps=2 format=3 uid=\"uid://" + Resource.generate_scene_unique_id() + "\"]
 
 [ext_resource type=\"Script\" uid=\"uid://" + Resource.generate_scene_unique_id() + "\" path=\"res://resources/SyntaxResource.gd\" " + "id=\"1_3h4hm\"]
 
@@ -48,6 +55,7 @@ member_keywords = {
 }
 completions = [[\"display_text\", \"insert_text\"]]
 metadata/_custom_type_script = \"uid://" + Resource.generate_scene_unique_id() + "\""
+		new_file(text)
 
 func update_window_title():
 	var title = \
@@ -62,18 +70,33 @@ func current_file_name() -> String:
 	else:
 		return NEW_FILE_PLACEHOLDER
 
-func new_file():
+func new_file(text: String):
 	current_file = ''
-	$CodeArea.text = ''
-	$CodeArea.clear_syntax()
+	var code_area = preload("res://code_area.tscn").instantiate()
+	if $TabContainer.get_tab_count() > 0:
+		code_area.name = "Untitled" + str($TabContainer.get_tab_count())
+	else:
+		code_area.name = "Untitled"
+	if text != "":
+		code_area.text = text
+	$TabContainer.add_child(code_area)
+	$TabContainer.current_tab = $TabContainer.get_tab_count() - 1
+	#$CodeArea.text = ''
+	#$CodeArea.clear_syntax()
 	file_dirty = false
+	set_code_theme(current_theme)
+	set_lang(current_lang)
 	update_window_title()
+	
 	
 func save_file():
 	if current_file:
 		var path = current_file
 		var f = FileAccess.open(path, FileAccess.WRITE)
-		f.store_string($CodeArea.text)
+		var code_area_path = $TabContainer.get_child($TabContainer.current_tab).get_path()
+		var code_area = get_node(code_area_path)
+		f.store_string(code_area.text)
+		#f.store_string($CodeArea.text)
 		f.flush()
 		f.close()
 		current_file = path
@@ -85,7 +108,11 @@ func save_file():
 func set_code_theme(_theme: String):
 	current_theme = _theme
 	var resource = load("res://code-themes/%s-theme.tres" % _theme)
-	$CodeArea.set_code_theme(resource)
+	var code_area_path = $TabContainer.get_child($TabContainer.current_tab).get_path()
+	var code_area = get_node(code_area_path)
+	code_area.set_code_theme(resource)
+		
+	#$CodeArea.set_code_theme(resource)
 
 func generate_theme_menu_items():
 	var popup = $TopBar/ViewMenu.get_popup()
@@ -103,27 +130,45 @@ func set_lang(lang: String):
 	current_lang = lang
 	$BottomBar/SyntaxMenu.text = lang
 	if lang == LANG_PLACEFOLDER:
-		$CodeArea.clear_syntax()
+		var code_area_path = $TabContainer.get_child($TabContainer.current_tab).get_path()
+		var code_area = get_node(code_area_path)
+		code_area.clear_syntax()
+		#$CodeArea.clear_syntax()
 	else:
 		set_syntax(lang)
 
 func guess_syntax():
 	var ext = current_file.get_extension()
-	for key in EXTENSIONS:
-		if EXTENSIONS[key].has(ext):
+	for key in extensions:
+		if extensions[key].has(ext):
 			set_lang(key)
 			return
 	set_lang(LANG_PLACEFOLDER)
 
 func set_syntax(lang: String):
-	var resource = load("res://code-syntaxes/%s.tres" % lang)
-	$CodeArea.set_syntax(resource)
+	if !DirAccess.dir_exists_absolute("user://syntaxes"):
+		DirAccess.make_dir_absolute("user://syntaxes")
+	if !FileAccess.file_exists("user://syntaxes/%s.tres" % lang):
+		var d = AcceptDialog.new()
+		d.title = "Error"
+		d.dialog_text = "シンタックスリソースが見つかりませんでした。"
+		d.name = "errordlg"
+		add_child(d)
+		d.popup_centered()
+		await d.confirmed
+		get_tree().quit()
+	else:
+		var resource = load("user://syntaxes/%s.tres" % lang)
+		var code_area_path = $TabContainer.get_child($TabContainer.current_tab).get_path()
+		var code_area = get_node(code_area_path)
+		code_area.set_syntax(resource)
+		#$CodeArea.set_syntax(resource)
 
 func generate_syntax_menu_items():
 	var popup = $BottomBar/SyntaxMenu.get_popup()
-	popup.set_item_count(EXTENSIONS.size() + 1)
+	popup.set_item_count(extensions.size() + 1)
 	var i = 0
-	for key in EXTENSIONS:
+	for key in extensions:
 		popup.set_item_text(i, key)
 		i += 1
 	popup.set_item_text(i, LANG_PLACEFOLDER)
@@ -132,7 +177,7 @@ func generate_syntax_menu_items():
 func _on_file_menu_selected(id: int):
 	match id:
 		FileMenuId.NEW:
-			new_file()
+			new_file("")
 		FileMenuId.OPEN:
 			$OpenFileDialog.popup()
 		FileMenuId.SAVE:
@@ -142,9 +187,17 @@ func _on_file_menu_selected(id: int):
 		FileMenuId.QUIT:
 			get_tree().quit()
 
+func _on_edit_menu_selected(id: int):
+	match id:
+		0:
+			$TabContainer.remove_child($TabContainer.get_current_tab_control())
+
 func _on_open_file_dialog_file_selected(path: String) -> void:
 	var f = FileAccess.open(path, FileAccess.READ)
-	$CodeArea.text = f.get_as_text()
+	var code_area_path = $TabContainer.get_child($TabContainer.current_tab).get_path()
+	var code_area = get_node(code_area_path)
+	code_area.text = f.get_as_text()
+	#$CodeArea.text = f.get_as_text()
 	f.close()
 	current_file = path
 	file_dirty = false
@@ -152,7 +205,10 @@ func _on_open_file_dialog_file_selected(path: String) -> void:
 
 func _on_save_file_dialog_file_selected(path: String) -> void:
 	var f = FileAccess.open(path, FileAccess.WRITE)
-	f.store_string($CodeArea.text)
+	var code_area_path = $TabContainer.get_child($TabContainer.current_tab).get_path()
+	var code_area = get_node(code_area_path)
+	f.store_string(code_area.text)
+	#f.store_string($CodeArea.text)
 	f.flush()
 	f.close()
 	current_file = path
@@ -166,16 +222,21 @@ func _on_code_area_text_changed():
 
 func _input(event):
 	if event.is_action_pressed("new_file"):
-		new_file()
+		new_file("")
 	elif event.is_action_pressed("open_file"):
 		$OpenFileDialog.popup()
 	elif event.is_action_pressed("save_as"):
 		$SaveFileDialog.popup()
 	elif event.is_action_pressed("save"):
 		save_file()
+	elif event.is_action_pressed("close_tab"):
+		$TabContainer.remove_child($TabContainer.get_current_tab_control())
 
 func _on_indent_changed_from_menu(id_as_indent: int):
-	$CodeArea.set_indent(id_as_indent)
+	var code_area_path = $TabContainer.get_child($TabContainer.current_tab).get_path()
+	var code_area = get_node(code_area_path)
+	code_area.set_indent(id_as_indent)
+	#$CodeArea.set_indent(id_as_indent)
 
 func _on_code_area_indent_changed(indent: int):
 	var text = $BottomBar/IndentSizeMenu.text

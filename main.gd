@@ -15,7 +15,7 @@ var current_theme : String = "Gessetti"
 var file_dirty = false
 
 func _ready():
-	if !DirAccess.dir_exists_absolute("user://extensions.gd"):
+	if !FileAccess.file_exists("user://extensions.gd"):
 		var f = FileAccess.open("user://extensions.gd", FileAccess.WRITE)
 		f.store_string("extends Node
 
@@ -23,6 +23,7 @@ const extensions = {
 	\"GDScript\": [\"gd\"]
 }")
 	extensions = load("user://extensions.gd").extensions
+	print(extensions)
 	$TopBar/FileMenu.get_popup().id_pressed.connect(_on_file_menu_selected)
 	$TopBar/EditMenu.get_popup().id_pressed.connect(_on_edit_menu_selected)
 	$TopBar/ResourceMenu.get_popup().id_pressed.connect(_on_resource_menu_selected)
@@ -63,6 +64,9 @@ func update_window_title():
 		+ ' - ' + current_file_name()
 	if file_dirty: title += " *"
 	get_window().title = title
+	var code_area_path = $TabContainer.get_child($TabContainer.current_tab).get_path()
+	var code_area = get_node(code_area_path)
+	code_area.name = current_file_name()
 
 func current_file_name() -> String:
 	if current_file:

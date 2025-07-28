@@ -30,25 +30,24 @@ func _ready():
 func _on_test_menu_selected(id: int):
 	if id == 0:
 		new_file()
-		$CodeArea.text = "
-		[gd_resource type=\"Resource\" script_class=\"SyntaxResource\" load_steps=2 format=3 uid=\"uid://" + Resource.generate_scene_unique_id() + "]
+		$CodeArea.text = "[gd_resource type=\"Resource\" script_class=\"SyntaxResource\" load_steps=2 format=3 uid=\"uid://" + Resource.generate_scene_unique_id() + "\"]
 
-		[ext_resource type=\"Script\" uid=\"uid://" + Resource.generate_scene_unique_id() + "\" path=\"res://resources/SyntaxResource.gd\" " + "id=\"1_3h4hm\"]
-		
-		[resource]
-		script = ExtResource(\"1_3h4hm\")
-		indent_size = 4
-		regions = {
-		\"key\": [[\"begin\",\"end\"]]
-		}
-		keywords = {
-		\"keyword\": [\"keyword\"]
-		}
-		member_keywords = {
-		\"member_keyword\": [\"member_keyword\"]
-		}
-		completions = [[\"display_text\", \"insert_text\"]]
-		metadata/_custom_type_script = \"uid://" + Resource.generate_scene_unique_id() + "\""
+[ext_resource type=\"Script\" uid=\"uid://" + Resource.generate_scene_unique_id() + "\" path=\"res://resources/SyntaxResource.gd\" " + "id=\"1_3h4hm\"]
+
+[resource]
+script = ExtResource(\"1_3h4hm\")
+indent_size = 4
+regions = {
+\"key\": [[\"begin\",\"end\"]]
+}
+keywords = {
+\"keyword\": [\"keyword\"]
+}
+member_keywords = {
+\"member_keyword\": [\"member_keyword\"]
+}
+completions = [[\"display_text\", \"insert_text\"]]
+metadata/_custom_type_script = \"uid://" + Resource.generate_scene_unique_id() + "\""
 
 func update_window_title():
 	var title = \

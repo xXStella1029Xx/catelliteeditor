@@ -53,9 +53,11 @@ offset_left = 60.0
 offset_right = 100.0
 offset_bottom = 31.0
 text = "編集"
-item_count = 1
+item_count = 2
 popup/item_0/text = "タブを閉じる"
 popup/item_0/id = 0
+popup/item_1/text = "すべてのタブを閉じる"
+popup/item_1/id = 1
 script = ExtResource("4_1bvp3")
 
 [node name="ViewMenu" type="MenuButton" parent="TopBar"]
@@ -138,5 +140,6 @@ size = Vector2i(600, 480)
 cancel_button_text = "キャンセル"
 access = 2
 
+[connection signal="tab_changed" from="TabContainer" to="." method="_on_tab_container_tab_changed"]
 [connection signal="file_selected" from="OpenFileDialog" to="." method="_on_open_file_dialog_file_selected"]
 [connection signal="file_selected" from="SaveFileDialog" to="." method="_on_save_file_dialog_file_selected"]

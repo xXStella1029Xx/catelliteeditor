@@ -2,6 +2,7 @@ extends MenuButton
 
 const SHORTCUT_KEY_MAPPING = {
 	0: "close_tab",
+	1: "close_all_tabs"
 }
 
 

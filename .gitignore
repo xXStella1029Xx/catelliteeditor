@@ -15,3 +15,6 @@ export_credentials.cfg
 data_*/
 mono_crash.*.json
 build/
+code-syntaxes/
+code-themes/
+icon.png

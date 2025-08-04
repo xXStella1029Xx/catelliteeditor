@@ -1,5 +1,8 @@
 extends Control
 
+const TEMP_PATH = "user://openfile_path.tmp"
+var owner_mode = false
+
 enum FileMenuId { NEW, OPEN, SAVE, SAVE_AS, QUIT }
 enum ViewMenuId { THEME }
 
@@ -15,6 +18,20 @@ var current_theme : String = "Gessetti"
 var file_dirty = false
 
 func _ready():
+	var args = OS.get_cmdline_args()
+	if FileAccess.file_exists(TEMP_PATH):
+		if args.size() > 0:
+			var target_file = args[0]
+			var file = FileAccess.open(TEMP_PATH, FileAccess.WRITE)
+			file.store_line(target_file)
+			file.close()
+			get_tree().quit()
+	else:
+		var file = FileAccess.open(TEMP_PATH, FileAccess.WRITE)
+		file.store_line("")
+		file.close()
+		owner_mode = true
+
 	if !FileAccess.file_exists("user://extensions.gd"):
 		var f = FileAccess.open("user://extensions.gd", FileAccess.WRITE)
 		f.store_string("extends Node
@@ -30,16 +47,32 @@ const THEMES = [\"Gessetti\", \"Pennarelli\"]")
 	$TopBar/ResourceMenu.get_popup().id_pressed.connect(_on_resource_menu_selected)
 	$BottomBar/IndentSizeMenu.get_popup().id_pressed.connect(_on_indent_changed_from_menu)
 	$BottomBar/SyntaxMenu.get_popup().id_pressed.connect(_on_syntax_changed_from_menu)
-	if OS.get_cmdline_args().size() > 0 and !OS.has_feature("editor"):
-		new_file("")
-		open_file(OS.get_cmdline_args()[0])
-	else:
-		new_file("")
 	generate_theme_menu_items()
 	generate_syntax_menu_items()
+	if args.size() > 0 and !OS.has_feature("editor"):
+		new_file("")
+		open_file(args[0])
+	else:
+		new_file("")
 	#$CodeArea.grab_focus()
-	
 
+func _process(_delta):
+	if FileAccess.file_exists(TEMP_PATH):
+		var file = FileAccess.open(TEMP_PATH, FileAccess.READ)
+		var path = file.get_line()
+		file.close()
+		if path != "":
+			new_file("")
+			open_file(path)
+			path = ""
+			DirAccess.remove_absolute(TEMP_PATH)
+			file = FileAccess.open(TEMP_PATH, FileAccess.WRITE)
+			file.store_line("")
+			file.close()
+			
+func _exit_tree():
+	if FileAccess.file_exists(TEMP_PATH) && owner_mode:
+		DirAccess.remove_absolute(TEMP_PATH)
 #エディターからシンタックスのリソースを作成
 func _on_resource_menu_selected(id: int):
 	if id == 0:
@@ -95,7 +128,7 @@ func new_file(text: String):
 	#$CodeArea.clear_syntax()
 	file_dirty = false
 	set_code_theme(current_theme)
-	set_lang(current_lang)
+	set_lang("Plain Text")
 	update_window_title()
 	
 func open_file(path: String):
@@ -164,7 +197,6 @@ func generate_theme_menu_items():
 	popup.add_submenu_item("Theme", "ThemeMenu", ViewMenuId.THEME)
 	submenu.set_item_checked(0, true)
 	submenu.id_pressed.connect(_on_code_theme_changed)
-	set_code_theme(THEMES[0])
 
 func set_lang(lang: String):
 	current_lang = lang
@@ -183,6 +215,8 @@ func guess_syntax():
 		if extensions[key].has(ext):
 			set_lang(key)
 			return
+		else:
+			set_lang("Plain Text")
 	set_lang(LANG_PLACEFOLDER)
 
 func set_syntax(lang: String):
@@ -212,7 +246,6 @@ func generate_syntax_menu_items():
 		popup.set_item_text(i, key)
 		i += 1
 	popup.set_item_text(i, LANG_PLACEFOLDER)
-	set_lang(LANG_PLACEFOLDER)
 
 func _on_file_menu_selected(id: int):
 	match id:
@@ -245,6 +278,7 @@ func _on_open_file_dialog_file_selected(path: String) -> void:
 	current_file = path
 	file_dirty = false
 	update_window_title()
+	guess_syntax()
 
 func _on_save_file_dialog_file_selected(path: String) -> void:
 	var f = FileAccess.open(path, FileAccess.WRITE)
@@ -257,6 +291,7 @@ func _on_save_file_dialog_file_selected(path: String) -> void:
 	current_file = path
 	file_dirty = false
 	update_window_title()
+	guess_syntax()
 
 func _on_code_area_text_changed():
 	if file_dirty: return
@@ -310,6 +345,7 @@ func _on_tab_container_tab_changed(tab: int) -> void:
 	var code_area_path = $TabContainer.get_child(tab).get_path()
 	var code_area = get_node(code_area_path)
 	if code_area != null:
-		current_file = code_area.name
+		current_file = code_area.name.replace("_", ".")
 		update_window_title()
+		guess_syntax()
 	
